@@ -353,7 +353,6 @@ This is another paragraph with _italic_ text and `code` here
 
         node = markdown_to_html_node(md)
         html = node.to_html()
-        print(html)
         self.assertEqual(
             html,
             "<div><p>This is <b>bolded</b> paragraph text in a p tag here</p><p>This is another paragraph with <i>italic</i> text and <code>code</code> here</p></div>",
@@ -373,7 +372,44 @@ the **same** even with inline stuff
             html,
             "<div><pre><code>This is text that _should_ remain\nthe **same** even with inline stuff\n</code></pre></div>",
         )
-    
+
+    def test_ordered_list(self):
+        md = """
+1. Number One
+2. Number Two
+3. Number Three
+"""
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><ol><li>Number One</li><li>Number Two</li><li>Number Three</li></ol></div>",
+        )
+
+    def test_extract_title(self):
+        md = "# Please find me"
+        title = extract_title(md)
+        self.assertEqual(title, "Please find me")
+
+    def test_extract_title2(self):
+        md = """
+Is there a title somewhere? Maybe, who is to say
+
+> Here perhaps?
+> Nope, I don't think so
+
+### Here? No luck here, buddy!
+
+# Aw dang, you found me
+"""
+        title = extract_title(md)
+        self.assertEqual(title, "Aw dang, you found me")
+
+    def test_extract_title_raises_error(self):
+        md = "Please find me"
+        with self.assertRaises(Exception):
+            extract_title(md)
 
 if __name__ == "__main__":
     unittest.main()

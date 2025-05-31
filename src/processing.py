@@ -121,21 +121,26 @@ def markdown_to_html_node(markdown):
 
 def generate_htmlnode_by_block_type(block, block_type):
     if block_type == BlockType.PARAGRAPH:
-        return LeafNode("p", block)
+        return ParentNode("p", get_leafnodes_from_line(block.replace("\n", " ")))
     
     if block_type == BlockType.HEADING:
         matches = re.findall(r"(^#{1,6}) (.*)", block)
         return LeafNode(f"h{matches[0][0].count("#")}", matches[0][1])
     
+    if block_type == BlockType.QUOTE:
+        return LeafNode("blockquote", block.replace(">", "").strip())
+    
     if block_type == BlockType.CODEBLOCK:
         fragments = block.split("```")
-        return LeafNode("pre", fragments[1])
+        code_node = LeafNode("code", fragments[1].lstrip("\n"))
+        parent_node = ParentNode("pre", [code_node])
+        return parent_node
     
     if block_type == BlockType.UNORDERED_LIST:
         children = []
         for line in block.split("\n"):
             if len(line) > 0:
-                children.append(LeafNode("li", line.replace("-", "").strip()))
+                children.append(ParentNode("li", get_leafnodes_from_line(line.replace("-", "").strip())))
 
         parent = ParentNode("ul", children)
         return parent
@@ -144,8 +149,23 @@ def generate_htmlnode_by_block_type(block, block_type):
         ol_children = []
         for line in block.split("\n"):
             if len(line) > 0:
-                ol_children.append(LeafNode("li"), re.findall(r"^\d{1}\. (.*?)")[0][0])
+                ol_children.append(ParentNode("li", get_leafnodes_from_line(re.findall(r"^\d{1}\. (.*)", line)[0])))
 
-        return ParentNode("ol", children)
+        return ParentNode("ol", ol_children)
+    
+def get_leafnodes_from_line(line):
+    text_nodes = text_to_textnodes(line)
+    leaf_nodes = []
+    for text_node in text_nodes:
+        leaf_nodes.append(text_node.to_html_node())
+    return leaf_nodes
+
+def extract_title(markdown):
+    blocks = markdown_to_blocks(markdown)
+    for block in blocks:
+        if re.search(r"^#{1} .*", block):
+            return block.split("# ", 1)[1]
+        
+    raise Exception("no title header found")
 
 

@@ -16,7 +16,14 @@ class ParentNode(HTMLNode):
         result = f"<{self.tag}{" " if len(props_str) > 0 else ""}{props_str}>"
 
         for child in self.children:
-            result += child.to_html()
+            try:
+                result += child.to_html()
+            except:
+                print(self)
+                print(self.children)
+                print(self.tag)
+                print(child)
+                raise
 
         result += f"</{self.tag}>"
 
